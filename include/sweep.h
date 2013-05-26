@@ -29,7 +29,7 @@ extern "C" {
   #define SWEEP_EXPORT extern
  #endif
 #else
- #ifndef _WIN32
+ #ifdef _WIN32
   #define SWEEP_EXPORT __declspec(dllimport)
  #else
   #define SWEEP_EXPORT
@@ -51,16 +51,8 @@ extern "C" {
 #define S_FALSE 0
 #define S_TRUE 1
 
-/* typedefs */
-struct 									__sbBoard_t;
-typedef struct __sbBoard_t * 			sbBoard_t;
-typedef const struct __sbBoard_t *		sbCBoard_t;
-
-enum sbCell_t;
-typedef sbCell_t sbLinear_t;
-
 /* enums */
-enum sbCell_t {
+typedef enum {
 	/* cell data */
 	SB_EMPTY		= 0x00,
 	SB_1			= 0x01,
@@ -91,21 +83,30 @@ enum sbCell_t {
 	SB_FLAG_TRUE	= 0x50,		/* cell was correctly flagged (bomb underneath) */
 	SB_FLAG_FALSE	= 0x60,		/* cell was incorrectly flagged (no bomb underneath) */
 	SB_FLAG_NONE	= 0x70,		/* cell was a bomb but no flag */
-};
+} sbCell_t;
 
-typedef struct {
+struct __sMenuHint_t;
+
+struct __sMenuHint_t{
 	struct {
 		const char *enGB;
 	} lang;
 	const char **title;
 	const char *action;
-	sMenuHint_t **children;
-	sMenuHint_t *parent;
-} sMenuHint_t;
+	struct __sMenuHint_t **children;
+	struct __sMenuHint_t *parent;
+};
 
+/* typedefs */
+struct 									__sbBoard_t;
+typedef struct __sbBoard_t * 			sbBoard_t;
+typedef const struct __sbBoard_t *		sbCBoard_t;
+
+typedef sbCell_t sbLinear_t;
+typedef struct __sMenuHint_t sMenuHint_t;
 /* (de)initialise */
 SWEEP_EXPORT sbBoard_t   sbCreate(uint16_t width, uint16_t height);
-SWEEP_EXPORT sbBoard_t   sbCopy(sbCBoard_t board);
+SWEEP_EXPORT sbBoard_t   sbCopy(sbBoard_t board);
 SWEEP_EXPORT void        sbFree(sbBoard_t board);
 
 /* reset */
@@ -126,12 +127,12 @@ SWEEP_EXPORT int         sbRevealBombs(sbBoard_t board);
 SWEEP_EXPORT int         sbRevealAll(sbBoard_t board);
 
 /* cell data */
-SWEEP_EXPORT sbCell *	 sbCreateDataArray(sbBoard_t board);
+SWEEP_EXPORT sbCell_t *	 sbCreateDataArray(sbBoard_t board);
 SWEEP_EXPORT sbCell_t    sbGetCellRaw(sbCBoard_t board, uint16_t x, uint16_t y);
 SWEEP_EXPORT sbCell_t    sbGetCellVisible(sbCBoard_t board, uint16_t x, uint16_t y);
 SWEEP_EXPORT void	     sbGetDataRaw(sbBoard_t board, sbCell_t *cells);
-SWEEP_EXPORT sbLinear *  sbGetDataVisible(sbBoard_t board);
-SWEEP_EXPORT void        sbSetCellRaw(sbBoard_t board, sbCell cell, uint16_t x, uint16_t y);
+SWEEP_EXPORT sbLinear_t *sbGetDataVisible(sbBoard_t board);
+SWEEP_EXPORT void        sbSetCellRaw(sbBoard_t board, sbCell_t cell, uint16_t x, uint16_t y);
 SWEEP_EXPORT void        sbToggleFlag(sbBoard_t board, uint16_t x, uint16_t y);
 SWEEP_EXPORT int         sbCountNeighbors(sbBoard_t board, uint16_t x, uint16_t y);
 SWEEP_EXPORT S_BOOL 	 sbSanityCheck(sbBoard_t board);
