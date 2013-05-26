@@ -147,7 +147,7 @@ SWEEP_EXPORT uint16_t    sbMaxWidth(void);
 SWEEP_EXPORT uint16_t    sbMinHeight(void);
 SWEEP_EXPORT uint16_t    sbMaxHeight(void);
 
-/* inlines */
+/* inlines */ /* [[[ un-inline this ]]]
 inline S_BOOL sbSanityCheckTile(sbCell_t c) {
 	if(S_1(c) > SB_BOMB || S_20(c) > SB_FLAG_NONE) return S_FALSE;
 	if(S_1(c) != SB_BOMB && S_20(c) >= SB_OPEN && S_20(c) <= SB_MARK) return S_TRUE;
@@ -158,10 +158,11 @@ inline S_BOOL sbSanityCheckTile(sbCell_t c) {
 inline sbLinear_t sbCellLinearize(sbCell_t c) {
 	if(S_20(c) == SB_OPEN) return S_1(c);
 	return SB_L_CLOSED + S_2(c) - 1;
-}
+}*/
 
 /* main */
-SWEEP_EXPORT int __sInit(void);
+#define sInit() __sInit(SWEEP_VER_MAJOR, SWEEP_VER_MINOR, SWEEP_VER_REV)
+SWEEP_EXPORT int __sInit(short maj, short min, short rev);
 SWEEP_EXPORT void sQuit(void);
 
 SWEEP_EXPORT const sMenuHint_t * sMenuHint(void);
