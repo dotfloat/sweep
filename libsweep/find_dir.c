@@ -18,7 +18,7 @@ const char *userdirs[] = { /* search directories within the user's home director
 	NULL
 };
 
-const char *globaldirs[] = { /* search directories */
+const char *globaldirs[] = { /* search directories within the system */
 	"/usr/share/sweep",
 	"/usr/share/games/sweep",
 	"/usr/local/share/sweep",
@@ -27,6 +27,7 @@ const char *globaldirs[] = { /* search directories */
 	NULL
 };
 
+/* User dir search */
 const char *__sFindUserDir(const char *dir, const char *file, S_BOOL create){
 	file = file?file:""; /* Avoid segfaults when file == NULL */
 
@@ -67,15 +68,50 @@ const char *__sFindUserDir(const char *dir, const char *file, S_BOOL create){
 				 strlen(file) + 1;
 
 	char *path = malloc(len);
-	snprintf(path, len, "%s%s%s%s", pw->pw_dir, userdirs[i], dir, file?file:"");
+	snprintf(path, len, "%s%s%s%s", pw->pw_dir, userdirs[i], dir, file);
+
+	return path;
+}
+
+const char *sFindUserConfig(const char *file, S_BOOL create){
+	return __sFindUserDir(configdir, file, create);
+}
+
+/* Global dir search */
+const char *__sFindGlobalDir(const char *dir, const char *file){
+	file = file?file:""; /* Avoid segfaults when file == NULL */
+
+	/* check if dirs exist */
+	int i;
+	for(i=0; globaldirs[i]; i++) {
+		size_t len = strlen(globaldirs[i]) + strlen(dir) + 1;
+		char test[len];
+		struct stat st = {0};
+		snprintf(test, len, "%s%s", globaldirs[i], dir);
+
+		if(!stat(test, &st)) {
+			if(S_ISDIR(st.st_mode)) {
+				break;
+			}
+		} else {
+			/* TODO: Check to see that it is safe to not do anything. */
+		}
+	}
+
+	if(!globaldirs[i]) {
+		return NULL;
+	}
+
+	size_t len = strlen(globaldirs[i]) +
+				 strlen(dir) + 
+				 strlen(file) + 1;
+
+	char *path = malloc(len);
+	snprintf(path, len, "%s%s%s", globaldirs[i], dir, file);
 
 	return path;
 }
 
 const char *sFindGlobalConfig(const char *file){
-
-}
-
-const char *sFindUserConfig(const char *file, S_BOOL create){
-	return __sFindUserDir(configdir, file, create);
+	return __sFindGlobalDir(configdir, file);
 }

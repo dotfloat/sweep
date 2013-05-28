@@ -6,7 +6,7 @@
 int main(int argc, char *argv[]){
 	sInit();
 
-	const char *s = sFindUserConfig(NULL, S_FALSE);
+	const char *s = sFindGlobalConfig(NULL);
 
 	printf("%s\n", s?s:"<nil>");
 
