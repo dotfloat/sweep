@@ -167,6 +167,8 @@ SWEEP_EXPORT void sQuit(void);
 
 SWEEP_EXPORT const sMenuHint_t * sMenuHint(void);
 
+SWEEP_EXPORT const char * sFindUserConfig(const char *file, S_BOOL create);
+
 #ifdef __cplusplus
 }
 #endif
