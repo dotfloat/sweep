@@ -5,8 +5,9 @@
 
 int main(int argc, char *argv[]){
 	sInit();
+        
 
-	const char *s = sFindGlobalConfig(NULL);
+	const char *s = sFindGlobalConfig("Hello");
 
 	printf("%s\n", s?s:"<nil>");
 
