@@ -161,15 +161,26 @@ inline sbLinear_t sbCellLinearize(sbCell_t c) {
 }*/
 
 /* main */
-#define sInit() __sInit(SWEEP_VER_MAJOR, SWEEP_VER_MINOR, SWEEP_VER_REV)
-SWEEP_EXPORT int __sInit(short maj, short min, short rev);
+#define sInit(argc, argv) __sInit(argc, argv, SWEEP_VER_MAJOR, SWEEP_VER_MINOR, SWEEP_VER_REV)
+SWEEP_EXPORT int __sInit(int *argc, char **argv, short maj, short min, short rev);
 SWEEP_EXPORT void sQuit(void);
 
 SWEEP_EXPORT const sMenuHint_t * sMenuHint(void);
 
 SWEEP_EXPORT const char * sFindUserConfig(const char *file, S_BOOL create);
 
-SWEEP_EXPORT int sCmdlineParse(int *argc, char ***argv);
+SWEEP_EXPORT int sCmdlineParse(int *argc, char **argv);
+SWEEP_EXPORT S_BOOL sCmdlineExists(const char *key);
+SWEEP_EXPORT S_BOOL sCmdlineArgs(const char *key, int *num_args, const char ***args);
+SWEEP_EXPORT int sCmdlineArgIntD(const char *key, int i, int def);
+SWEEP_EXPORT float sCmdlineArgFloatD(const char *key, int i, float def);
+SWEEP_EXPORT char sCmdlineArgCharD(const char *key, int i, char def);
+SWEEP_EXPORT const char* sCmdlineArgStringD(const char *key, int i, const char *def);
+
+#define sCmdlineArgInt(key, i) sCmdlineArgIntD(key, i, 0)
+#define sCmdlineArgFloat(key, i) sCmdlineArgIntD(key, i, 0.0f)
+#define sCmdlineArgChar(key, i) sCmdlineArgIntD(key, i, '\0')
+#define sCmdlineArgString(key, i) sCmdlineArgIntD(key, i, "")
 
 #ifdef __cplusplus
 }
