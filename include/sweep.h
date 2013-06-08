@@ -36,6 +36,7 @@ extern "C" {
  #endif
 #endif
 
+#include <stdio.h>
 #include <stdint.h>
 
 /* version stuff */
@@ -85,6 +86,11 @@ typedef enum {
 	SB_FLAG_NONE	= 0x70,		/* cell was a bomb but no flag */
 } sbCell_t;
 
+typedef enum {
+    S_STATE_GAME,
+    S_STATE_QUIT,
+} sState_t;
+
 struct __sMenuHint_t;
 
 struct __sMenuHint_t{
@@ -98,19 +104,18 @@ struct __sMenuHint_t{
 };
 
 /* typedefs */
-struct 									__sbBoard_t;
+struct 					        __sbBoard_t;
 typedef struct __sbBoard_t * 			sbBoard_t;
-typedef const struct __sbBoard_t *		sbCBoard_t;
 
 typedef sbCell_t sbLinear_t;
 typedef struct __sMenuHint_t sMenuHint_t;
 /* (de)initialise */
-SWEEP_EXPORT sbBoard_t   sbCreate(uint16_t width, uint16_t height);
+SWEEP_EXPORT sbBoard_t   sbInit(uint16_t width, uint16_t height);
 SWEEP_EXPORT sbBoard_t   sbCopy(sbBoard_t board);
-SWEEP_EXPORT void        sbFree(sbBoard_t board);
+SWEEP_EXPORT void        sbDestroy(sbBoard_t board);
 
 /* reset */
-SWEEP_EXPORT int         sbResize(sbBoard_t board, uint16_t width, uint16_t height);
+SWEEP_EXPORT sbBoard_t   sbResize(sbBoard_t board, uint16_t width, uint16_t height);
 SWEEP_EXPORT int         sbReset(sbBoard_t board);
 
 /* populate */
@@ -127,15 +132,18 @@ SWEEP_EXPORT int         sbRevealBombs(sbBoard_t board);
 SWEEP_EXPORT int         sbRevealAll(sbBoard_t board);
 
 /* cell data */
+SWEEP_EXPORT uint16_t    sbGetWidth(sbBoard_t board);
+SWEEP_EXPORT uint16_t    sbGetHeight(sbBoard_t board);
 SWEEP_EXPORT sbCell_t *	 sbCreateDataArray(sbBoard_t board);
-SWEEP_EXPORT sbCell_t    sbGetCellRaw(sbCBoard_t board, uint16_t x, uint16_t y);
-SWEEP_EXPORT sbCell_t    sbGetCellVisible(sbCBoard_t board, uint16_t x, uint16_t y);
-SWEEP_EXPORT void	     sbGetDataRaw(sbBoard_t board, sbCell_t *cells);
-SWEEP_EXPORT sbLinear_t *sbGetDataVisible(sbBoard_t board);
+SWEEP_EXPORT sbCell_t    sbGetCellRaw(sbBoard_t board, uint16_t x, uint16_t y);
+SWEEP_EXPORT sbCell_t    sbGetCellVisible(sbBoard_t board, uint16_t x, uint16_t y);
+SWEEP_EXPORT int	 sbGetDataRaw(sbBoard_t board, sbCell_t *cells);
+SWEEP_EXPORT int         sbGetDataVisible(sbBoard_t board, sbLinear_t *map);
 SWEEP_EXPORT void        sbSetCellRaw(sbBoard_t board, sbCell_t cell, uint16_t x, uint16_t y);
 SWEEP_EXPORT void        sbToggleFlag(sbBoard_t board, uint16_t x, uint16_t y);
 SWEEP_EXPORT int         sbCountNeighbors(sbBoard_t board, uint16_t x, uint16_t y);
 SWEEP_EXPORT S_BOOL 	 sbSanityCheck(sbBoard_t board);
+SWEEP_EXPORT sbCell_t *  sbAllocMap(sbBoard_t board);
 
 /* limits */
 SWEEP_EXPORT uint32_t    sbMinBombs(sbBoard_t board);
@@ -149,16 +157,37 @@ SWEEP_EXPORT uint16_t    sbMaxHeight(void);
 
 /* inlines */ /* [[[ un-inline this ]]]
 inline S_BOOL sbSanityCheckTile(sbCell_t c) {
-	if(S_1(c) > SB_BOMB || S_20(c) > SB_FLAG_NONE) return S_FALSE;
-	if(S_1(c) != SB_BOMB && S_20(c) >= SB_OPEN && S_20(c) <= SB_MARK) return S_TRUE;
-	if(S_1(c) == SB_BOMB && S_20(c) != SB_OPEN) return S_TRUE;
-	return S_FALSE;
+        if(S_1(c) > SB_BOMB || S_20(c) > SB_FLAG_NONE) return S_FALSE;
+        if(S_1(c) != SB_BOMB && S_20(c) >= SB_OPEN && S_20(c) <= SB_MARK) return S_TRUE;
+        if(S_1(c) == SB_BOMB && S_20(c) != SB_OPEN) return S_TRUE;
+        return S_FALSE;
 }
 
 inline sbLinear_t sbCellLinearize(sbCell_t c) {
-	if(S_20(c) == SB_OPEN) return S_1(c);
-	return SB_L_CLOSED + S_2(c) - 1;
+        if(S_20(c) == SB_OPEN) return S_1(c);
+        return SB_L_CLOSED + S_2(c) - 1;
 }*/
+
+/* game */
+typedef enum {
+    SG_EASY,
+    SG_NORMAL,
+    SG_HARD,
+    SG_DIFF_LAST,
+    
+} sgDiff_t;
+
+struct __sgGame_t;
+typedef struct __sgGame_t *sgGame_t;
+
+SWEEP_EXPORT sgGame_t sgInit(void);
+SWEEP_EXPORT void sgDestroy(sgGame_t game);
+
+SWEEP_EXPORT int sgStart(sgGame_t game, sgDiff_t difficulty);
+
+SWEEP_EXPORT uint16_t    sgGetWidth(sgGame_t game);
+SWEEP_EXPORT uint16_t    sgGetHeight(sgGame_t game);
+SWEEP_EXPORT sbBoard_t   sgGetBoard(sgGame_t game);
 
 /* main */
 #define sInit(argc, argv) __sInit(argc, argv, SWEEP_VER_MAJOR, SWEEP_VER_MINOR, SWEEP_VER_REV)
@@ -181,6 +210,14 @@ SWEEP_EXPORT const char* sCmdlineArgStringD(const char *key, int i, const char *
 #define sCmdlineArgFloat(key, i) sCmdlineArgIntD(key, i, 0.0f)
 #define sCmdlineArgChar(key, i) sCmdlineArgIntD(key, i, '\0')
 #define sCmdlineArgString(key, i) sCmdlineArgIntD(key, i, "")
+
+SWEEP_EXPORT sState_t sGetState(void);
+
+SWEEP_EXPORT float sGetTimeSgl(void);
+SWEEP_EXPORT double sGetTimeDbl(void);
+
+SWEEP_EXPORT void sDebugDumpBoard(FILE *dest);
+SWEEP_EXPORT void sDebugDumpBoardVisible(FILE *dest);
 
 #ifdef __cplusplus
 }

@@ -1,0 +1,9 @@
+[Buildset]
+BuildItems=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x01\x00\x00\x00\x0b\x00\x00\x00\x00\x01\x00\x00\x00\x10\x00l\x00i\x00b\x00s\x00w\x00e\x00e\x00p)
+
+[CMake]
+CMakeDir=/usr/share/cmake-2.8/Modules
+ProjectRootRelative=./
+
+[Project]
+VersionControlSupport=kdevgit
