@@ -14,13 +14,29 @@ void sDebugDumpBoard(FILE *dest){
     
     int x, y;
     size_t s;
+    
+    fputc(' ', dest);
+    for(x=0; x<sgGetWidth(game); x++) {
+        fputc('-', dest);
+    }
+    fputc('\n', dest);
+    
     for(y=0; y<sgGetHeight(game); y++) {
+        fputc('|', dest);
         for(x=0; x<sgGetWidth(game); x++) {
             s = y*sgGetHeight(game) + x;
-            putchar(linear[S_1(map[s])]);
+            fputc(linear[S_1(map[s])], dest);
         }
-        putchar('\n');
+        fputc('|', dest);
+        fputc('\n', dest);
     }
+    
+    fputc(' ', dest);
+    for(x=0; x<sgGetWidth(game); x++) {
+        fputc('-', dest);
+    }
+    fputc('\n', dest);
+    
     free(map);
 }
 
@@ -30,12 +46,28 @@ void sDebugDumpBoardVisible(FILE *dest){
     
     int x, y;
     size_t s;
+    
+    fputc(' ', dest);
+    for(x=0; x<sgGetWidth(game); x++) {
+        fputc('-', dest);
+    }
+    fputc('\n', dest);
+    
     for(y=0; y<sgGetHeight(game); y++) {
+        fputc('|', dest);
         for(x=0; x<sgGetWidth(game); x++) {
             s = y*sgGetHeight(game) + x;
-            putchar(linear[map[s]]);
+            fputc(linear[map[s]], dest);
         }
-        putchar('\n');
+        fputc('|', dest);
+        fputc('\n', dest);
     }
+    
+    fputc(' ', dest);
+    for(x=0; x<sgGetWidth(game); x++) {
+        fputc('-', dest);
+    }
+    fputc('\n', dest);
+    
     free(map);
 }

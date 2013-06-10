@@ -22,6 +22,9 @@ int sbReset(sbBoard_t board){
     board->bombs = 0;
     board->seed = 0;
     
+    board->exploded = S_FALSE;
+    board->mark = S_FALSE;
+    
     return 0;
 }
 

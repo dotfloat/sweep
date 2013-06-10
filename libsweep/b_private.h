@@ -8,4 +8,7 @@ struct __sbBoard_t {
     uint32_t seed;
 
     sbCell_t *map;
+    
+    S_BOOL exploded;
+    S_BOOL mark;
 };

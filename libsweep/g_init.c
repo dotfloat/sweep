@@ -16,7 +16,7 @@ struct __sgDiff_t{
 
 sgGame_t sgInit(void){
     sgGame_t g = malloc(sizeof(struct __sgGame_t));
-    g->board = NULL;
+    memset(g, 0, sizeof(struct __sgGame_t));
     return g;
 }
 
@@ -26,6 +26,7 @@ int sgStart(sgGame_t g, sgDiff_t difficulty){
     } else {
         g->difficulty = difficulty;
     }
+    g->playing = S_TRUE;
     
     struct __sgDiff_t *diff = &sgDiffs[g->difficulty];
     

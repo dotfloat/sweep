@@ -12,18 +12,16 @@ int __sInit(int *argc, char **argv, short maj, short min, short rev){
     }
     
     sCmdlineParse(argc, argv);
+    sInitStates();
     
     game = sgInit();
     
     sgStart(game, SG_EASY);
-    
-    
 
     return S_TRUE;
 }
 
 void sQuit(void){
     sgDestroy(game);
-    
-	/* do something */
+    /* do something */
 }

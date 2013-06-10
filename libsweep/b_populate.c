@@ -30,7 +30,14 @@ int __sbPopulate(sbBoard_t board, uint32_t bombs, uint32_t seed, char safe, uint
         return 0;
     }
     int x, y, i;
-
+    
+    // clear the minefield without removing flags
+    for(y=0; y<board->height; y++) {
+        for(x=0; x<board->width; x++) {
+            board->map[y*board->width+x] = S_20(board->map[y*board->width+x]);
+        }
+    }
+    
     // shuffle
     for(i=0; i<bombs; i++) {
         do {

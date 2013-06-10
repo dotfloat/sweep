@@ -14,8 +14,8 @@ uint16_t sbGetHeight(sbBoard_t board){
 }
 
 sbLinear_t sbCellLinearize(sbCell_t c){
-        if(S_20(c) == SB_OPEN) return S_1(c);
-        return SB_L_CLOSED + S_2(c) - 1;
+    if(S_20(c) == SB_OPEN) return S_1(c);
+    return SB_L_CLOSED + S_2(c) - 1;
 }
 
 sbCell_t *sbAllocMap(sbBoard_t board){
@@ -75,15 +75,18 @@ void sbSetCellRaw(sbBoard_t board, sbCell_t cell, uint16_t x, uint16_t y){
 }
 
 /* need to fix mark stuff */
-/*void sbToggleFlag(sbBoard_t board, uint16_t x, uint16_t y)
+void sbToggleFlag(sbBoard_t board, uint16_t x, uint16_t y)
 {
-    sbCell_t *c = &board->_map[y*board->_width+x];
-    if(((*c)&0xf0)==sbCClosed)
-        *c = sbCFlag | ((*c)&0xf);
-    else if(((*c)&0xf0)==sbCFlag && (board->state&sbStMark))
-        *c = SB_MARK | ((*c)&0xf);
-    else *c = SB_CLOSED | ((*c)&0xf);
-}*/
+    sbCell_t c = board->map[y*board->width+x];
+    if(S_20(c) == SB_CLOSED) {
+        c = SB_FLAG | S_1(c);
+    } else if(S_20(c) == SB_FLAG && board->mark) {
+        c = SB_MARK | S_1(c);
+    } else if(S_20(c) == SB_FLAG || S_20(c) == SB_MARK) {
+        c = SB_CLOSED | S_1(c);
+    }
+    board->map[y*board->width+x] = c;
+}
 
 #define COUNTNEIGHBOURS(mx, my) if(x>=mx&&y>=my&&(x-mx)<board->width&&(y-my)<board->height) {\
         c = board->map[(y-my)*board->width+x-mx]; if(S_20(c)==SB_OPEN||S_20(c)==SB_FLAG||S_20(c)==SB_MARK) n++; }
@@ -103,4 +106,26 @@ int sbCountNeighbors(sbBoard_t board, uint16_t x, uint16_t y){
     COUNTNEIGHBOURS(0, -1)
 
     return n;
+}
+
+S_BOOL sbExploded(sbBoard_t board){
+    return board->exploded;
+}
+
+S_BOOL sbHasWon(sbBoard_t board){
+    int x, y;
+    sbCell_t c;
+    for(y=0; y<board->height; y++) {
+        for(x=0; x<board->width; x++) {
+            c = board->map[y*board->width + x];
+            if(S_1(c) == SB_BOMB && S_20(c) != SB_OPEN) {
+                continue;
+            } else if(S_1(c) != SB_BOMB && S_20(c) == SB_OPEN) {
+                continue;
+            } else {
+                return S_FALSE;
+            }
+        }
+    }
+    return S_TRUE;
 }

@@ -46,7 +46,7 @@ extern "C" {
 
 /* some basic macros */
 #define S_1(c) 		(c&0xf)			/* get first nybble from 'c'  [S_1(0x42)==0x2] */
-#define S_2(c) 		((c&0xf0)>8)	/* get second nybble from 'c' [S_2(0x42)==0x4] */
+#define S_2(c) 		((c&0xf0)>>4)	/* get second nybble from 'c' [S_2(0x42)==0x4] */
 #define S_20(c)		(c&0xf0)		/* same as S_2(c) but without the bitshift */
 #define S_BOOL int
 #define S_FALSE 0
@@ -87,8 +87,11 @@ typedef enum {
 } sbCell_t;
 
 typedef enum {
-    S_STATE_GAME,
-    S_STATE_QUIT,
+    S_ACTION,
+    S_RENDER,
+    S_QUIT,
+    S_WON,
+    S_LOST,
 } sState_t;
 
 struct __sMenuHint_t;
@@ -155,6 +158,8 @@ SWEEP_EXPORT uint16_t    sbMaxWidth(void);
 SWEEP_EXPORT uint16_t    sbMinHeight(void);
 SWEEP_EXPORT uint16_t    sbMaxHeight(void);
 
+SWEEP_EXPORT S_BOOL sbHasWon(sbBoard_t board);
+
 /* inlines */ /* [[[ un-inline this ]]]
 inline S_BOOL sbSanityCheckTile(sbCell_t c) {
         if(S_1(c) > SB_BOMB || S_20(c) > SB_FLAG_NONE) return S_FALSE;
@@ -188,6 +193,10 @@ SWEEP_EXPORT int sgStart(sgGame_t game, sgDiff_t difficulty);
 SWEEP_EXPORT uint16_t    sgGetWidth(sgGame_t game);
 SWEEP_EXPORT uint16_t    sgGetHeight(sgGame_t game);
 SWEEP_EXPORT sbBoard_t   sgGetBoard(sgGame_t game);
+SWEEP_EXPORT int sgToggleFlag(sgGame_t game, int x, int y);
+
+typedef void (*sgCallback_t)(void);
+SWEEP_EXPORT void        sgSetCBExplode(sgCallback_t callback);
 
 /* main */
 #define sInit(argc, argv) __sInit(argc, argv, SWEEP_VER_MAJOR, SWEEP_VER_MINOR, SWEEP_VER_REV)
@@ -218,6 +227,12 @@ SWEEP_EXPORT double sGetTimeDbl(void);
 
 SWEEP_EXPORT void sDebugDumpBoard(FILE *dest);
 SWEEP_EXPORT void sDebugDumpBoardVisible(FILE *dest);
+
+SWEEP_EXPORT int sReveal(int x, int y);
+
+SWEEP_EXPORT S_BOOL sbExploded(sbBoard_t board);
+SWEEP_EXPORT int sToggleFlag(int x, int y);
+SWEEP_EXPORT void sPollQuit(void);
 
 #ifdef __cplusplus
 }
