@@ -233,6 +233,7 @@ SWEEP_EXPORT int sReveal(int x, int y);
 SWEEP_EXPORT S_BOOL sbExploded(sbBoard_t board);
 SWEEP_EXPORT int sToggleFlag(int x, int y);
 SWEEP_EXPORT void sPollQuit(void);
+SWEEP_EXPORT sbBoard_t sGetBoard(void);
 
 #ifdef __cplusplus
 }

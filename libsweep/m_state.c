@@ -41,3 +41,7 @@ sState_t sGetState(void){
 void sPollQuit(void){
     state = S_QUIT;
 }
+
+sbBoard_t sGetBoard(void){
+    return sgGetBoard(game);
+}
