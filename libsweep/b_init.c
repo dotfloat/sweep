@@ -5,20 +5,20 @@
 #include <sweep.h>
 #include "b_private.h"
 
-sbBoard_t sbInit(uint16_t width, uint16_t height){
-    sbBoard_t board = malloc(sizeof(struct __sbBoard_t));
+sweep_board_t sweepBoardInit(uint16_t width, uint16_t height){
+    sweep_board_t board = malloc(sizeof(struct __sweep_board_t));
     board->map = NULL;
-    if(!(board = sbResize(board, width, height)))
+    if(!(board = sweepBoardResize(board, width, height)))
     {
-        sbDestroy(board);
+        free(board);
         return NULL;
     }
 
     return board;
 }
 
-int sbReset(sbBoard_t board){
-    memset(board->map, SB_EMPTY|SB_CLOSED, sizeof(sbCell_t)*board->width*board->height);
+int sweepBoardReset(sweep_board_t board){
+    memset(board->map, SWEEP_EMPTY|SWEEP_CLOSED, sizeof(sweep_cell_t)*board->width*board->height);
     board->bombs = 0;
     board->seed = 0;
     
@@ -28,17 +28,17 @@ int sbReset(sbBoard_t board){
     return 0;
 }
 
-sbBoard_t sbCopy(sbBoard_t board){
-    sbBoard_t copy = malloc(sizeof(struct __sbBoard_t));
-    memcpy(copy, board, sizeof(struct __sbBoard_t));
+sweep_board_t sweepBoardCopy(sweep_board_t board){
+    sweep_board_t copy = malloc(sizeof(struct __sweep_board_t));
+    memcpy(copy, board, sizeof(struct __sweep_board_t));
 
-    copy->map = malloc(sizeof(sbCell_t)*board->width*board->height);
-    memcpy(copy->map, board->map, sizeof(sbCell_t)*board->width*board->height);
+    copy->map = malloc(sizeof(sweep_cell_t)*board->width*board->height);
+    memcpy(copy->map, board->map, sizeof(sweep_cell_t)*board->width*board->height);
 
     return copy;
 }
 
-void sbDestroy(sbBoard_t board){
+void sweepBoardDestroy(sweep_board_t board){
     if(!board) return;
     free(board->map);
     free(board);

@@ -1,14 +1,14 @@
 
 #include "g_private.h"
 
-uint16_t sgGetWidth(sgGame_t g){
-    return sbGetWidth(g->board);
+uint16_t sweepGetWidth(sweep_t g){
+    return sweepBoardWidth(g->board);
 }
 
-uint16_t sgGetHeight(sgGame_t g){
-    return sbGetHeight(g->board);
+uint16_t sweepGetHeight(sweep_t g){
+    return sweepBoardHeight(g->board);
 }
 
-sbBoard_t sgGetBoard(sgGame_t g){
+sweep_board_t sweepGetBoard(sweep_t g){
     return g->board;
 }

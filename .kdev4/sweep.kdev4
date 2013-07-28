@@ -16,7 +16,7 @@ Extra Arguments=
 Install Directory=file:///usr/local
 
 [Launch]
-Launch Configurations=Launch Configuration 0,Launch Configuration 1
+Launch Configurations=Launch Configuration 0
 
 [Launch][Launch Configuration 0]
 Configured Launch Modes=execute

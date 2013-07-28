@@ -1,13 +1,10 @@
 add_definitions (-D__LIBSWEEP__)
 
-add_library (sweep #SHARED
-	m_init.c
+add_library( sweep SHARED
 	m_find_dir.c
 	m_cmdline.c
-	m_state.c
 	m_time.c
 	m_debug.c
-	m_controls.c
 	
 	g_init.c
 	g_data.c

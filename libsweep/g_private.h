@@ -4,11 +4,11 @@
 
 #include <sweep.h>
 
-struct __sgGame_t{
-    sbBoard_t board;
-    sgDiff_t difficulty;
-    S_BOOL playing;
-    S_BOOL started;
+struct __sweep_t{
+    sweep_board_t       board;
+    sweep_diff_t        difficulty;
+    S_BOOL              playing;
+    S_BOOL              populated;
 };
 
 extern sgCallback_t CB_exploded;

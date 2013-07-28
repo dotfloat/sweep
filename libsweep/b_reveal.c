@@ -10,7 +10,7 @@ typedef struct {
 } sbPx;
 
 typedef struct {
-    sbBoard_t board;
+    sweep_board_t board;
     sbPx *stack;
     int stackN;
     sbPx p;
@@ -39,36 +39,35 @@ int __reveal(int mx, int my, reveal_t *R){
         return S_FALSE;
     }
     
-    if(S_20(R->board->map[a])==SB_CLOSED) {
-        R->board->map[a] = SB_OPEN | S_1(R->board->map[a]);
-            printf("%d\n", S_1(R->board->map[a]));
-        if(S_1(R->board->map[a]) == SB_EMPTY) {
+    if(S_20(R->board->map[a])==SWEEP_CLOSED) {
+        R->board->map[a] = SWEEP_OPEN | S_1(R->board->map[a]);
+        if(S_1(R->board->map[a]) == SWEEP_EMPTY) {
             sbPx q = {R->p.x-mx, R->p.y-my};
             if(!__pushStack(&R->stack, &R->stackN, q)) {
                 free(R->stack);
                 return S_FALSE;
             }
-        } else if(S_1(R->board->map[a]) == SB_BOMB) {
-            R->board->map[a] = SB_EXPLODE;
+        } else if(S_1(R->board->map[a]) == SWEEP_BOMB) {
+            R->board->map[a] = SWEEP_EXPLODE;
             R->board->exploded = S_TRUE;
         }
     }
     return S_TRUE;
 }
 
-int sbReveal(sbBoard_t board, uint16_t x, uint16_t y){
+int sweepBoardReveal(sweep_board_t board, uint16_t x, uint16_t y){
     if(x>=board->width||y>=board->height) {
         /* Out of bounds */
         return 0;
     }
 
-    board->map[y*board->width+x] = SB_OPEN | S_1(board->map[y*board->width+x]);
+    board->map[y*board->width+x] = SWEEP_OPEN | S_1(board->map[y*board->width+x]);
 
-    if(S_1(board->map[y*board->width+x]) == SB_BOMB) {
-        board->map[y*board->width+x] = SB_EXPLODE;
+    if(S_1(board->map[y*board->width+x]) == SWEEP_BOMB) {
+        board->map[y*board->width+x] = SWEEP_EXPLODE;
         board->exploded = S_TRUE;
         return S_TRUE;
-    } else if(S_1(board->map[y*board->width+x]) != SB_EMPTY) {
+    } else if(S_1(board->map[y*board->width+x]) != SWEEP_EMPTY) {
         return S_TRUE;
     }
     
@@ -86,7 +85,7 @@ int sbReveal(sbBoard_t board, uint16_t x, uint16_t y){
     while(R.stackN)
     {
         R.p = __popStack(&(R.stack), &(R.stackN));
-
+        
         __reveal(1, 1, &R);
         __reveal(1, -1, &R);
         __reveal(-1, 1, &R);
@@ -103,83 +102,69 @@ int sbReveal(sbBoard_t board, uint16_t x, uint16_t y){
     return 1;
 }
 
-#define REVEALAROUND(mx, my) if(x>=mx&&y>=my&&(x-mx)<board->width&&(y-my)<board->height) sbReveal(board, x-mx, y-my);
-
-int sbRevealAround(sbBoard_t board, uint16_t x, uint16_t y)
+int sweepBoardRevealAround(sweep_board_t board, uint16_t x, uint16_t y)
 {
     if(x>=board->width||y>=board->height)
     {
         /* out of bounds */
         return 0;
     }
-
-    REVEALAROUND(1, 1)
-    REVEALAROUND(1, -1)
-    REVEALAROUND(-1, 1)
-    REVEALAROUND(-1, -1)
-
-    REVEALAROUND(1, 0)
-    REVEALAROUND(0, 1)
-    REVEALAROUND(-1, 0)
-    REVEALAROUND(0, -1)
+    
+    sweep_cell_t c = sweepBoardCellRaw(board, x, y);
+    if(S_20(c) != SWEEP_OPEN) {
+        return 0;
+    }
+    if(S_1(c) >= SWEEP_BOMB) {
+        return 0;
+    }
+    
+    if(sweepBoardCountNeighbors(board, x, y) == S_1(c)) {
+#define X(Sx, Sy, Px, Py) sweepBoardReveal(board, Px, Py);
+        SWEEP_XMACRO_local
+#undef X
+    }
 
     return 1;
 }
 
-int sbRevealAroundStrict(sbBoard_t board, uint16_t x, uint16_t y)
-{
-    int n = sbCountNeighbors(board, x, y);
-    char c = sbGetCellVisible(board, x, y);
-    if(S_20(c) != SB_OPEN)
-    {
-        /* Open */
-        return 0;
-    }
-
-    if(n == c)
-        return sbRevealAround(board, x, y);
-    /* n != c */
-    return 0;
-}
-
-int sbRevealBombs(sbBoard_t board)
+int sweepBoardRevealBombs(sweep_board_t board)
 {
     uint32_t i;
-    sbCell_t c;
+    sweep_cell_t c;
     for(i=0; i<board->width*board->height; i++)
     {
         c = board->map[i];
-        if(S_20(c) == SB_MARK || S_20(c) == SB_FLAG) {
-            if(S_1(c) == SB_BOMB) {
-                board->map[i] = SB_FLAG_TRUE;
+        if(S_20(c) == SWEEP_MARK || S_20(c) == SWEEP_FLAG) {
+            if(S_1(c) == SWEEP_BOMB) {
+                board->map[i] = SWEEP_FLAG_TRUE;
             } else {
-                board->map[i] = SB_FLAG_FALSE;
+                board->map[i] = SWEEP_FLAG_FALSE;
             }
-        } else if(S_1(c) == SB_BOMB) {
-            board->map[i] = SB_FLAG_NONE;
+        } else if(S_1(c) == SWEEP_BOMB) {
+            board->map[i] = SWEEP_FLAG_NONE;
         }
     }
 
     return 1;
 }
 
-int sbRevealAll(sbBoard_t board)
+int sweepBoardRevealAll(sweep_board_t board)
 {
     uint32_t i;
-    sbCell_t c;
+    sweep_cell_t c;
     for(i=0; i<board->width*board->height; i++)
     {
         c = board->map[i];
-        if(S_20(c) == SB_MARK || S_20(c) == SB_FLAG) {
-            if(S_1(c) == SB_BOMB) {
-                board->map[i] = SB_FLAG_TRUE;
+        if(S_20(c) == SWEEP_MARK || S_20(c) == SWEEP_FLAG) {
+            if(S_1(c) == SWEEP_BOMB) {
+                board->map[i] = SWEEP_FLAG_TRUE;
             } else {
-                board->map[i] = SB_FLAG_FALSE;
+                board->map[i] = SWEEP_FLAG_FALSE;
             }
-        } else if(S_1(c) == SB_BOMB) {
-            board->map[i] = SB_FLAG_NONE;
+        } else if(S_1(c) == SWEEP_BOMB) {
+            board->map[i] = SWEEP_FLAG_NONE;
         } else {
-            board->map[i] = SB_OPEN | S_1(board->map[i]);
+            board->map[i] = SWEEP_OPEN | S_1(board->map[i]);
         }
     }
     return 1;

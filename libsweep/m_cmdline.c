@@ -81,13 +81,13 @@ char sCmdlineArgCharD(const char *key, int i, char def){
     return arr->args[i][0];
 }
 
-const char *sCmdlineArgStringD(const char *key, int i, const char *def){
+const char *sweepCmdlineArgStringD(const char *key, int i, const char *def){
     __arr_t *arr;
     if(!(arr = __sFindInArray(key))) return def;
     return arr->args[i];
 }
 
-int sCmdlineParse(int *o_argc, char **o_argv){
+int sweepCmdlineParse(int *o_argc, char **o_argv){
     int i, j, ignore_args = 0;
     int argc = 1;
     

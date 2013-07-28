@@ -1,63 +1,63 @@
 
-#include <memory.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <sweep.h>
 #include "b_private.h"
 
-uint16_t sbGetWidth(sbBoard_t board){
+uint16_t sweepBoardWidth(sweep_board_t board){
     return board->width;
 }
 
-uint16_t sbGetHeight(sbBoard_t board){
+uint16_t sweepBoardHeight(sweep_board_t board){
     return board->height;
 }
 
-sbLinear_t sbCellLinearize(sbCell_t c){
-    if(S_20(c) == SB_OPEN) return S_1(c);
-    return SB_L_CLOSED + S_2(c) - 1;
+sweep_linear_t sweepBoardCellLinearize(sweep_cell_t c){
+    if(S_20(c) == SWEEP_OPEN) return S_1(c);
+    return SWEEP_L_CLOSED + S_2(c) - 1;
 }
 
-sbCell_t *sbAllocMap(sbBoard_t board){
-    return malloc(sizeof(sbCell_t) * board->width * board->height);
+sweep_cell_t *sweepBoardAllocMap(sweep_board_t board){
+    return malloc(sizeof(sweep_cell_t)*board->width*board->height);
 }
 
-sbCell_t sbGetCellRaw(sbBoard_t board, uint16_t x, uint16_t y){
+sweep_cell_t sweepBoardCellRaw(sweep_board_t board, uint16_t x, uint16_t y){
     return board->map[y*board->width+x];
 }
 
-sbLinear_t sbGetCellVisible(sbBoard_t board, uint16_t x, uint16_t y){
-    sbCell_t c = board->map[y*board->width+x];
-    return sbCellLinearize(c);
+sweep_linear_t sweepBoardCellVisible(sweep_board_t board, uint16_t x, uint16_t y){
+    sweep_cell_t c = board->map[y*board->width+x];
+    return sweepBoardCellLinearize(c);
 }
 
-sbCell_t sbGetCellFlags(sbBoard_t board, uint16_t x, uint16_t y){
+sweep_cell_t sweepBoardCellFlags(sweep_board_t board, uint16_t x, uint16_t y){
     return S_20(board->map[y*board->width+x]);
 }
 
-int sbGetDataRaw(sbBoard_t board, sbCell_t *map){
-    memcpy(map, board->map, sizeof(sbCell_t) * board->width * board->height);
+int sweepBoardDataRaw(sweep_board_t board, sweep_cell_t *map){
+    memcpy(map, board->map, sizeof(sweep_cell_t)*board->width*board->height);
     return S_TRUE;
 }
 
-int sbGetDataVisible(sbBoard_t board, sbLinear_t *map){
+int sweepBoardDataVisible(sweep_board_t board, sweep_linear_t *map){
     int x, y;
-    sbCell_t c;
+    sweep_cell_t c;
     size_t s;
     for(y=0; y<board->height; y++) {
         for(x=0; x<board->width; x++) {
             s = y*board->width+x;
             c = board->map[s];
-            map[s] = sbCellLinearize(c);
+            map[s] = sweepBoardCellLinearize(c);
         }
     }
     
     return 0;
 }
 
-int sbGetDataFlags(sbBoard_t board, sbCell_t *map){
+int sweepBoardDataFlags(sweep_board_t board, sweep_cell_t *map){
     int x, y;
-    sbCell_t c;
+    sweep_cell_t c;
     size_t s;
     for(y=0; y<board->height; y++) {
         for(x=0; x<board->width; x++) {
@@ -70,57 +70,49 @@ int sbGetDataFlags(sbBoard_t board, sbCell_t *map){
     return 0;
 }
 
-void sbSetCellRaw(sbBoard_t board, sbCell_t cell, uint16_t x, uint16_t y){
+void sweepBoardSetCellRaw(sweep_board_t board, sweep_cell_t cell, uint16_t x, uint16_t y){
     board->map[y*board->width+x] = cell;
 }
 
 /* need to fix mark stuff */
-void sbToggleFlag(sbBoard_t board, uint16_t x, uint16_t y)
+void sweepBoardToggleFlag(sweep_board_t board, uint16_t x, uint16_t y)
 {
-    sbCell_t c = board->map[y*board->width+x];
-    if(S_20(c) == SB_CLOSED) {
-        c = SB_FLAG | S_1(c);
-    } else if(S_20(c) == SB_FLAG && board->mark) {
-        c = SB_MARK | S_1(c);
-    } else if(S_20(c) == SB_FLAG || S_20(c) == SB_MARK) {
-        c = SB_CLOSED | S_1(c);
+    sweep_cell_t c = board->map[y*board->width+x];
+    if(S_20(c) == SWEEP_CLOSED) {
+        c = SWEEP_FLAG | S_1(c);
+    } else if(S_20(c) == SWEEP_FLAG && board->mark) {
+        c = SWEEP_MARK | S_1(c);
+    } else if(S_20(c) == SWEEP_FLAG || S_20(c) == SWEEP_MARK) {
+        c = SWEEP_CLOSED | S_1(c);
     }
     board->map[y*board->width+x] = c;
 }
-
-#define COUNTNEIGHBOURS(mx, my) if(x>=mx&&y>=my&&(x-mx)<board->width&&(y-my)<board->height) {\
-        c = board->map[(y-my)*board->width+x-mx]; if(S_20(c)==SB_OPEN||S_20(c)==SB_FLAG||S_20(c)==SB_MARK) n++; }
-
-int sbCountNeighbors(sbBoard_t board, uint16_t x, uint16_t y){
+int sweepBoardCountNeighbors(sweep_board_t board, uint16_t x, uint16_t y){
     int n = 0;
-    sbCell_t c;
 
-    COUNTNEIGHBOURS(1, 1)
-    COUNTNEIGHBOURS(1, -1)
-    COUNTNEIGHBOURS(-1, 1)
-    COUNTNEIGHBOURS(-1, -1)
-
-    COUNTNEIGHBOURS(1, 0)
-    COUNTNEIGHBOURS(0, 1)
-    COUNTNEIGHBOURS(-1, 0)
-    COUNTNEIGHBOURS(0, -1)
+    #define X(Sx, Sy, Px, Py) \
+        sweep_cell_t c = board->map[ Py*Sx + Px ]; \
+        if(S_20(c) == SWEEP_OPEN || S_20(c) == SWEEP_FLAG || S_20(c) == SWEEP_MARK) n++;
+    
+        SWEEP_XMACRO_local
+    #undef X
 
     return n;
 }
 
-S_BOOL sbExploded(sbBoard_t board){
+S_BOOL sweepBoardHasExploded(sweep_board_t board){
     return board->exploded;
 }
 
-S_BOOL sbHasWon(sbBoard_t board){
+S_BOOL sweepBoardHasWon(sweep_board_t board){
     int x, y;
-    sbCell_t c;
+    sweep_cell_t c;
     for(y=0; y<board->height; y++) {
         for(x=0; x<board->width; x++) {
             c = board->map[y*board->width + x];
-            if(S_1(c) == SB_BOMB && S_20(c) != SB_OPEN) {
+            if(S_1(c) == SWEEP_BOMB && S_20(c) != SWEEP_OPEN) {
                 continue;
-            } else if(S_1(c) != SB_BOMB && S_20(c) == SB_OPEN) {
+            } else if(S_1(c) != SWEEP_BOMB && S_20(c) == SWEEP_OPEN) {
                 continue;
             } else {
                 return S_FALSE;

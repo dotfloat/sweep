@@ -45,46 +45,65 @@ extern "C" {
 #define SWEEP_VER_REV	0
 
 /* some basic macros */
-#define S_1(c) 		(c&0xf)			/* get first nybble from 'c'  [S_1(0x42)==0x2] */
-#define S_2(c) 		((c&0xf0)>>4)	/* get second nybble from 'c' [S_2(0x42)==0x4] */
-#define S_20(c)		(c&0xf0)		/* same as S_2(c) but without the bitshift */
-#define S_BOOL int
-#define S_FALSE 0
-#define S_TRUE 1
+#define S_1(c)          (c&0xf)         /* get first nybble from 'c'  [S_1(0x42)==0x2] */
+#define S_2(c)          ((c&0xf0)>>4)   /* get second nybble from 'c' [S_2(0x42)==0x4] */
+#define S_20(c)         (c&0xf0)        /* same as S_2(c) but without the bitshift */
+#define S_BOOL          int
+#define S_FALSE         0
+#define S_TRUE          1
+
+#define SWEEP_XMACRO_CELL(Sx, Sy, Px, Py, Mx, My) \
+    if(Px>=Mx && Py>=My && (Px-Mx)<Sx && (Py-My)<Sy) { X(Sx, Sy, (Px-Mx), (Py-My)) }
+        
+#define SWEEP_XMACRO(Sx, Sy, Px, Py) \
+    SWEEP_XMACRO_CELL(Sx, Sy, Px, Py,  1,  0)\
+    SWEEP_XMACRO_CELL(Sx, Sy, Px, Py,  0,  1)\
+    SWEEP_XMACRO_CELL(Sx, Sy, Px, Py, -1,  0)\
+    SWEEP_XMACRO_CELL(Sx, Sy, Px, Py,  0, -1)\
+    SWEEP_XMACRO_CELL(Sx, Sy, Px, Py,  1,  1)\
+    SWEEP_XMACRO_CELL(Sx, Sy, Px, Py,  1, -1)\
+    SWEEP_XMACRO_CELL(Sx, Sy, Px, Py, -1,  1)\
+    SWEEP_XMACRO_CELL(Sx, Sy, Px, Py, -1, -1)\
+
+#define SWEEP_XMACRO_B(B, Px, Py) \
+    SWEEP_XMACRO(B->width, B->height, Px, Py)
+
+#define SWEEP_XMACRO_local \
+    SWEEP_XMACRO(board->width, board->height, x, y)
 
 /* enums */
 typedef enum {
-	/* cell data */
-	SB_EMPTY		= 0x00,
-	SB_1			= 0x01,
-	SB_2			= 0x02,
-	SB_3			= 0x03,
-	SB_4			= 0x04,
-	SB_5			= 0x05,
-	SB_6			= 0x06,
-	SB_7			= 0x07,
-	SB_8			= 0x08,
-	SB_BOMB			= 0x09,
+    /* cell data */
+    SWEEP_EMPTY         = 0x00,
+    SWEEP_1             = 0x01,
+    SWEEP_2             = 0x02,
+    SWEEP_3             = 0x03,
+    SWEEP_4             = 0x04,
+    SWEEP_5             = 0x05,
+    SWEEP_6             = 0x06,
+    SWEEP_7             = 0x07,
+    SWEEP_8             = 0x08,
+    SWEEP_BOMB          = 0x09,
 
-	/* linear */
-	SB_L_CLOSED		= 0x0a,
-	SB_L_FLAG		= 0x0b,
-	SB_L_MARK		= 0x0c,
-	SB_L_EXPLODE	= 0x0d,
-	SB_L_FLAG_TRUE	= 0x0e,
-	SB_L_FLAG_FALSE	= 0x0f,
-	SB_L_FLAG_NONE	= 0x10,
+    /* linear */
+    SWEEP_L_CLOSED      = 0x0a,
+    SWEEP_L_FLAG        = 0x0b,
+    SWEEP_L_MARK        = 0x0c,
+    SWEEP_L_EXPLODE     = 0x0d,
+    SWEEP_L_FLAG_TRUE   = 0x0e,
+    SWEEP_L_FLAG_FALSE  = 0x0f,
+    SWEEP_L_FLAG_NONE   = 0x10,
 
-	/* cell flag */
-	SB_OPEN			= 0x00,		/* cell is open (and isn't a bomb) */
-	SB_CLOSED		= 0x10,		/* cell is closed (default) */
-	SB_FLAG			= 0x20,		/* flag is placed on closed cell */
-	SB_MARK			= 0x30,		/* mark is placed on closed cell */
-	SB_EXPLODE		= 0x40,		/* a bomb is revealed */
-	SB_FLAG_TRUE	= 0x50,		/* cell was correctly flagged (bomb underneath) */
-	SB_FLAG_FALSE	= 0x60,		/* cell was incorrectly flagged (no bomb underneath) */
-	SB_FLAG_NONE	= 0x70,		/* cell was a bomb but no flag */
-} sbCell_t;
+    /* cell flag */
+    SWEEP_OPEN          = 0x00, /* cell is open (and isn't a bomb) */
+    SWEEP_CLOSED        = 0x10, /* cell is closed (default) */
+    SWEEP_FLAG          = 0x20, /* flag is placed on closed cell */
+    SWEEP_MARK          = 0x30, /* mark is placed on closed cell */
+    SWEEP_EXPLODE       = 0x40, /* a bomb is revealed */
+    SWEEP_FLAG_TRUE     = 0x50, /* cell was correctly flagged (bomb underneath) */
+    SWEEP_FLAG_FALSE    = 0x60, /* cell was incorrectly flagged (no bomb underneath) */
+    SWEEP_FLAG_NONE     = 0x70, /* cell was a bomb but no flag */
+} sweep_cell_t;
 
 typedef enum {
     S_ACTION,
@@ -94,84 +113,58 @@ typedef enum {
     S_LOST,
 } sState_t;
 
-struct __sMenuHint_t;
-
-struct __sMenuHint_t{
-	struct {
-		const char *enGB;
-	} lang;
-	const char **title;
-	const char *action;
-	struct __sMenuHint_t **children;
-	struct __sMenuHint_t *parent;
-};
-
 /* typedefs */
-struct 					        __sbBoard_t;
-typedef struct __sbBoard_t * 			sbBoard_t;
+struct __sweep_board_t;
+typedef struct __sweep_board_t * sweep_board_t;
 
-typedef sbCell_t sbLinear_t;
-typedef struct __sMenuHint_t sMenuHint_t;
+typedef sweep_cell_t sweep_linear_t;
+
 /* (de)initialise */
-SWEEP_EXPORT sbBoard_t   sbInit(uint16_t width, uint16_t height);
-SWEEP_EXPORT sbBoard_t   sbCopy(sbBoard_t board);
-SWEEP_EXPORT void        sbDestroy(sbBoard_t board);
+SWEEP_EXPORT sweep_board_t      sweepBoardInit          ( uint16_t width, uint16_t height );
+SWEEP_EXPORT sweep_board_t      sweepBoardCopy          ( sweep_board_t board );
+SWEEP_EXPORT void               sweepBoardDestroy       ( sweep_board_t board );
 
 /* reset */
-SWEEP_EXPORT sbBoard_t   sbResize(sbBoard_t board, uint16_t width, uint16_t height);
-SWEEP_EXPORT int         sbReset(sbBoard_t board);
+SWEEP_EXPORT sweep_board_t      sweepBoardResize        ( sweep_board_t board, uint16_t width, uint16_t height );
+SWEEP_EXPORT int                sweepBoardReset         ( sweep_board_t board );
 
 /* populate */
-SWEEP_EXPORT int         sbPopulate(sbBoard_t board, uint32_t bombs);
-SWEEP_EXPORT int         sbPopulateSafe(sbBoard_t board, uint32_t bombs, uint16_t x, uint16_t y);
-SWEEP_EXPORT int         sbPopulateFromSeed(sbBoard_t board, uint32_t bombs, uint32_t seed);
-SWEEP_EXPORT int         sbPopulateSafeFromSeed(sbBoard_t board, uint32_t bombs, uint32_t seed, uint16_t x, uint16_t y);
+SWEEP_EXPORT int                sweepBoardPopulate           ( sweep_board_t board, uint32_t bombs );
+SWEEP_EXPORT int                sweepBoardPopulateSafe       ( sweep_board_t board, uint32_t bombs, uint16_t x, uint16_t y );
+SWEEP_EXPORT int                sweepBoardPopulateSeed       ( sweep_board_t board, uint32_t bombs, uint32_t seed );
+SWEEP_EXPORT int                sweepBoardPopulateSafeSeed   ( sweep_board_t board, uint32_t bombs, uint32_t seed, uint16_t x, uint16_t y );
 
 /* reveal */
-SWEEP_EXPORT int         sbReveal(sbBoard_t board, uint16_t x, uint16_t y);
-SWEEP_EXPORT int         sbRevealAround(sbBoard_t board, uint16_t x, uint16_t y);
-SWEEP_EXPORT int         sbRevealAroundStrict(sbBoard_t board, uint16_t x, uint16_t y);
-SWEEP_EXPORT int         sbRevealBombs(sbBoard_t board);
-SWEEP_EXPORT int         sbRevealAll(sbBoard_t board);
+SWEEP_EXPORT int                sweepBoardReveal        ( sweep_board_t board, uint16_t x, uint16_t y );
+SWEEP_EXPORT int                sweepBoardRevealAround  ( sweep_board_t board, uint16_t x, uint16_t y );
+SWEEP_EXPORT int                sweepBoardRevealBombs   ( sweep_board_t board );
+SWEEP_EXPORT int                sweepBoardRevealAll     ( sweep_board_t board );
 
 /* cell data */
-SWEEP_EXPORT uint16_t    sbGetWidth(sbBoard_t board);
-SWEEP_EXPORT uint16_t    sbGetHeight(sbBoard_t board);
-SWEEP_EXPORT sbCell_t *	 sbCreateDataArray(sbBoard_t board);
-SWEEP_EXPORT sbCell_t    sbGetCellRaw(sbBoard_t board, uint16_t x, uint16_t y);
-SWEEP_EXPORT sbCell_t    sbGetCellVisible(sbBoard_t board, uint16_t x, uint16_t y);
-SWEEP_EXPORT int	 sbGetDataRaw(sbBoard_t board, sbCell_t *cells);
-SWEEP_EXPORT int         sbGetDataVisible(sbBoard_t board, sbLinear_t *map);
-SWEEP_EXPORT void        sbSetCellRaw(sbBoard_t board, sbCell_t cell, uint16_t x, uint16_t y);
-SWEEP_EXPORT void        sbToggleFlag(sbBoard_t board, uint16_t x, uint16_t y);
-SWEEP_EXPORT int         sbCountNeighbors(sbBoard_t board, uint16_t x, uint16_t y);
-SWEEP_EXPORT S_BOOL 	 sbSanityCheck(sbBoard_t board);
-SWEEP_EXPORT sbCell_t *  sbAllocMap(sbBoard_t board);
+SWEEP_EXPORT uint16_t           sweepBoardWidth         ( sweep_board_t board );
+SWEEP_EXPORT uint16_t           sweepBoardHeight        ( sweep_board_t board );
+SWEEP_EXPORT sweep_cell_t *	sweepBoardAllocMap      ( sweep_board_t board );
+SWEEP_EXPORT sweep_cell_t       sweepBoardCellRaw       ( sweep_board_t board, uint16_t x, uint16_t y );
+SWEEP_EXPORT sweep_cell_t       sweepBoardCellVisible   ( sweep_board_t board, uint16_t x, uint16_t y );
+SWEEP_EXPORT int	        sweepBoardDataRaw       ( sweep_board_t board, sweep_cell_t *cells );
+SWEEP_EXPORT int                sweepBoardDataVisible   ( sweep_board_t board, sweep_linear_t *map );
+SWEEP_EXPORT void               sweepBoardSetCellRaw    ( sweep_board_t board, sweep_cell_t cell, uint16_t x, uint16_t y );
+SWEEP_EXPORT void               sweepBoardToggleFlag    ( sweep_board_t board, uint16_t x, uint16_t y );
+SWEEP_EXPORT int                sweepBoardCountNeighbors( sweep_board_t board, uint16_t x, uint16_t y );
+SWEEP_EXPORT S_BOOL 	        sweepBoardSanityCheck   ( sweep_board_t board );
 
 /* limits */
-SWEEP_EXPORT uint32_t    sbMinBombs(sbBoard_t board);
-SWEEP_EXPORT uint32_t    sbMaxBombs(sbBoard_t board);
-SWEEP_EXPORT uint32_t    sbMinBombsXY(uint16_t x, uint16_t y);
-SWEEP_EXPORT uint32_t    sbMaxBombsXY(uint16_t x, uint16_t y);
-SWEEP_EXPORT uint16_t    sbMinWidth(void);
-SWEEP_EXPORT uint16_t    sbMaxWidth(void);
-SWEEP_EXPORT uint16_t    sbMinHeight(void);
-SWEEP_EXPORT uint16_t    sbMaxHeight(void);
+SWEEP_EXPORT uint32_t           sweepMinBombs           ( sweep_board_t board );
+SWEEP_EXPORT uint32_t           sweepMaxBombs           ( sweep_board_t board );
+SWEEP_EXPORT uint32_t           sweepMinBombsXY         ( uint16_t x, uint16_t y );
+SWEEP_EXPORT uint32_t           sweepMaxBombsXY         ( uint16_t x, uint16_t y );
+SWEEP_EXPORT uint16_t           sweepMinWidth           ( void );
+SWEEP_EXPORT uint16_t           sweepMaxWidth           ( void );
+SWEEP_EXPORT uint16_t           sweepMinHeight          ( void );
+SWEEP_EXPORT uint16_t           sweepMaxHeight          ( void );
 
-SWEEP_EXPORT S_BOOL sbHasWon(sbBoard_t board);
-
-/* inlines */ /* [[[ un-inline this ]]]
-inline S_BOOL sbSanityCheckTile(sbCell_t c) {
-        if(S_1(c) > SB_BOMB || S_20(c) > SB_FLAG_NONE) return S_FALSE;
-        if(S_1(c) != SB_BOMB && S_20(c) >= SB_OPEN && S_20(c) <= SB_MARK) return S_TRUE;
-        if(S_1(c) == SB_BOMB && S_20(c) != SB_OPEN) return S_TRUE;
-        return S_FALSE;
-}
-
-inline sbLinear_t sbCellLinearize(sbCell_t c) {
-        if(S_20(c) == SB_OPEN) return S_1(c);
-        return SB_L_CLOSED + S_2(c) - 1;
-}*/
+SWEEP_EXPORT S_BOOL             sweepBoardHasWon             ( sweep_board_t board );
+SWEEP_EXPORT S_BOOL             sweepBoardHasExploded        ( sweep_board_t board );
 
 /* game */
 typedef enum {
@@ -180,60 +173,43 @@ typedef enum {
     SG_HARD,
     SG_DIFF_LAST,
     
-} sgDiff_t;
+} sweep_diff_t;
 
-struct __sgGame_t;
-typedef struct __sgGame_t *sgGame_t;
+struct __sweep_t;
+typedef struct __sweep_t *sweep_t;
 
-SWEEP_EXPORT sgGame_t sgInit(void);
-SWEEP_EXPORT void sgDestroy(sgGame_t game);
+SWEEP_EXPORT sweep_t            sweepInitGame           ( void );
+SWEEP_EXPORT void               sweepDestroyGame        ( sweep_t game );
 
-SWEEP_EXPORT int sgStart(sgGame_t game, sgDiff_t difficulty);
+SWEEP_EXPORT int                sweepNewGame            ( sweep_t game, sweep_diff_t difficulty );
 
-SWEEP_EXPORT uint16_t    sgGetWidth(sgGame_t game);
-SWEEP_EXPORT uint16_t    sgGetHeight(sgGame_t game);
-SWEEP_EXPORT sbBoard_t   sgGetBoard(sgGame_t game);
-SWEEP_EXPORT int sgToggleFlag(sgGame_t game, int x, int y);
+SWEEP_EXPORT uint16_t           sweepGetWidth           ( sweep_t game );
+SWEEP_EXPORT uint16_t           sweepGetHeight          ( sweep_t game );
+SWEEP_EXPORT sweep_board_t      sweepGetBoard           ( sweep_t game );
+SWEEP_EXPORT int                sweepToggleFlag         ( sweep_t game, int x, int y );
 
 typedef void (*sgCallback_t)(void);
 SWEEP_EXPORT void        sgSetCBExplode(sgCallback_t callback);
 
 /* main */
-#define sInit(argc, argv) __sInit(argc, argv, SWEEP_VER_MAJOR, SWEEP_VER_MINOR, SWEEP_VER_REV)
-SWEEP_EXPORT int __sInit(int *argc, char **argv, short maj, short min, short rev);
-SWEEP_EXPORT void sQuit(void);
-
-SWEEP_EXPORT const sMenuHint_t * sMenuHint(void);
-
 SWEEP_EXPORT const char * sFindUserConfig(const char *file, S_BOOL create);
 
-SWEEP_EXPORT int sCmdlineParse(int *argc, char **argv);
-SWEEP_EXPORT S_BOOL sCmdlineExists(const char *key);
-SWEEP_EXPORT S_BOOL sCmdlineArgs(const char *key, int *num_args, const char ***args);
-SWEEP_EXPORT int sCmdlineArgIntD(const char *key, int i, int def);
-SWEEP_EXPORT float sCmdlineArgFloatD(const char *key, int i, float def);
-SWEEP_EXPORT char sCmdlineArgCharD(const char *key, int i, char def);
-SWEEP_EXPORT const char* sCmdlineArgStringD(const char *key, int i, const char *def);
+SWEEP_EXPORT int                sweepCmdlineParse      ( int *argc, char **argv );
+SWEEP_EXPORT S_BOOL             sweepCmdlineExists     ( const char *key );
+SWEEP_EXPORT S_BOOL             sweepCmdlineArgs       ( const char *key, int *num_args, const char ***args );
 
-#define sCmdlineArgInt(key, i) sCmdlineArgIntD(key, i, 0)
-#define sCmdlineArgFloat(key, i) sCmdlineArgIntD(key, i, 0.0f)
-#define sCmdlineArgChar(key, i) sCmdlineArgIntD(key, i, '\0')
-#define sCmdlineArgString(key, i) sCmdlineArgIntD(key, i, "")
+SWEEP_EXPORT int                sweepCmdlineArgIntD    ( const char *key, int i, int def );
+SWEEP_EXPORT float              sweepCmdlineArgFloatD  ( const char *key, int i, float def );
+SWEEP_EXPORT char               sweepCmdlineArgCharD   ( const char *key, int i, char def );
+SWEEP_EXPORT const char*        sweepCmdlineArgStringD ( const char *key, int i, const char *def );
 
-SWEEP_EXPORT sState_t sGetState(void);
+#define sweepCmdlineArgInt(key, i)          sweepCmdlineArgIntD(key, i, 0)
+#define sweepCmdlineArgFloat(key, i)        sweepCmdlineArgIntD(key, i, 0.0f)
+#define sweepCmdlineArgChar(key, i)         sweepCmdlineArgIntD(key, i, '\0')
+#define sweepCmdlineArgString(key, i)       sweepCmdlineArgIntD(key, i, "")
 
-SWEEP_EXPORT float sGetTimeSgl(void);
-SWEEP_EXPORT double sGetTimeDbl(void);
-
-SWEEP_EXPORT void sDebugDumpBoard(FILE *dest);
-SWEEP_EXPORT void sDebugDumpBoardVisible(FILE *dest);
-
-SWEEP_EXPORT int sReveal(int x, int y);
-
-SWEEP_EXPORT S_BOOL sbExploded(sbBoard_t board);
-SWEEP_EXPORT int sToggleFlag(int x, int y);
-SWEEP_EXPORT void sPollQuit(void);
-SWEEP_EXPORT sbBoard_t sGetBoard(void);
+SWEEP_EXPORT void               sweepDebugDump          ( sweep_t game, FILE *dest );
+SWEEP_EXPORT void               sweepDebugDumpBoard     ( sweep_board_t game, FILE *dest );
 
 #ifdef __cplusplus
 }

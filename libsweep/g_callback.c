@@ -2,7 +2,7 @@
 #include <sweep.h>
 #include "g_private.h"
 
-void __dummy(void){
+static void __dummy(void){
 }
 
 sgCallback_t CB_exploded = __dummy;
